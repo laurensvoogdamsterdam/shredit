@@ -13,16 +13,16 @@ services:
     depends_on:
       - db
 
-  # web:
-  #   build: ./web
-  #   volumes:
-  #     - ./web:/app
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - api
-  #   environment:
-  #     - API_URL=http://api:8000
+  web:
+    build: ./web
+    volumes:
+      - ./web:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8000
 
   db:
     image: postgres:13
