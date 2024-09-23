@@ -1,28 +1,16 @@
-version: '3'
-
 services:
   api:
     build: ./api
-    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./api:/src
+      - ./api/src/api:/app/api
     ports:
       - "8000:8000"
     env_file:
       - ./api/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/postgres
     depends_on:
       - db
-
-  web:
-    build: ./web
-    volumes:
-      - ./web:/app
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api
-    environment:
-      - API_URL=http://api:8000
 
   db:
     image: postgres:13
@@ -32,6 +20,11 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

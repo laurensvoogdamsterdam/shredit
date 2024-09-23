@@ -11,7 +11,7 @@ def cli():
 @cli.command()
 def up():
     #  use uvicorn to run api
-    uvicorn.run("api.api:api", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api.api:app", host="0.0.0.0", port=8000, reload=True)
 
 
 

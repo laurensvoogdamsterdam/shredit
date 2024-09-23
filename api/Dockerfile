@@ -1,22 +1,30 @@
-# Start with a lightweight Python image
+# Dockerfile
+
 FROM python:3.10-slim
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libffi-dev \
+    musl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
 
-# Copy pyproject.toml and poetry.lock
-COPY pyproject.toml poetry.lock /app/
+# Copy pyproject.toml and poetry.lock files
+COPY pyproject.toml /app/
 
-# Install Poetry and dependencies
-RUN pip install poetry 
-RUN poetry config virtualenvs.create false 
-RUN  poetry install --no-interaction --no-ansi
+# Install Poetry
+RUN pip install poetry
 
-# Copy the rest of the app
-COPY . /app/
+# Configure Poetry to not create a virtualenv
+RUN poetry config virtualenvs.create true
 
-# Expose the port for FastAPI
-EXPOSE 8000
+# Install dependencies
+RUN poetry install 
+# Copy the rest of the application code
+COPY src /app/src
+COPY src/api /app/api
 
-# Command to run FastAPI with uvicorn
-CMD ["poetry", "run", "api", "up"]
+CMD ["poetry","run","uvicorn", "api.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
