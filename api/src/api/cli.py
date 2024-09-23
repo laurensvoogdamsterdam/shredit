@@ -11,14 +11,12 @@ def cli():
 @cli.command()
 def up():
     #  use uvicorn to run api
-    os.system("uvicorn api.src.api:app --reload")
-    uvicorn.run("src.api:app", host="
+    uvicorn.run("api.api:api", host="0.0.0.0", port=8000, reload=True)
 
 
 
 if __name__ == "__main__":
     cli()
-``` 
 
 
 
