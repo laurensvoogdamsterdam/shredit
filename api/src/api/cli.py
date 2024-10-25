@@ -1,6 +1,8 @@
+import os
+
 import click
-import os 
 import uvicorn
+
 
 # create click command
 @click.group()

@@ -1,15 +1,21 @@
-import os
-import api
-from fastapi import FastAPI
+import asyncio
 import importlib
+import os
 import pkgutil
 from pathlib import Path
-from api.utils.logger import log
-from api.db.pool import init_db
-import asyncio
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from starlette_graphene3 import GraphQLApp, make_playground_handler
 from strawberry.fastapi import GraphQLRouter
-from api.db.pool import AsyncSessionLocal
+
+import api
+from api.db.pool import AsyncSessionLocal, get_db, init_db
+from api.middleware import Auth0Middleware
+from api.utils.auth0 import get_current_user
 from api.utils.gql import schema
+from api.utils.logger import log
+
 
 class API(FastAPI):
     def __init__(self, *args, **kwargs):
@@ -31,8 +37,12 @@ class API(FastAPI):
                     log.info(f"Loading router: {f}")    
                     self.include_router(module.router)
 
-        # include gql routers
-        self.include_router(GraphQLRouter(schema), prefix="/gql")
+        # include gql router
+        self.add_route("/gql", GraphQLApp(schema, on_get=make_playground_handler()))
+
+        
+        
+        
                 
         
 # Instantiate the API
@@ -43,9 +53,14 @@ app = API()
 async def startup_event():
     await app.init()
 
+# cors middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow your Next.js app
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["Authorization", "Content-Type", "Access-Control-Allow-Origin"],  
+)
 
-@app.middleware("http")
-async def add_session_to_context(request, call_next):
-    response = await call_next(request)
-    response.state.session = AsyncSessionLocal()
-    return response
+# middleware for auth0
+app.add_middleware(Auth0Middleware)

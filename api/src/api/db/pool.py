@@ -1,12 +1,23 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
 import os
-from api.db.models import User, Base, UserRole
+
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+from api.db.models import Base, User, UserRole
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:password@db:5432/postgres")
 
 # Create an asynchronous engine
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+# Create an asynchronous engine
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=True,  # Enable SQL echo for debugging (can be set to False in production)
+    future=True,  # Use SQLAlchemy 2.0 style
+    pool_size=100,  # Adjust the pool size according to your workload
+    max_overflow=20,  # Extra connections allowed to "overflow" the pool
+    pool_timeout=30,  # Timeout before the pool raises an error
+    pool_recycle=3600  # Recycle connections after an hour
+)
 
 # Create a session factory
 AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
@@ -20,50 +31,9 @@ async def create_sample_data():
     async with AsyncSessionLocal() as session:  # New session for sample data
         async with session.begin():  # Transaction management
             # check if there are any users in the db
-            result = await session.execute(User.__table__.select())
-            users = result.scalars().all()
-            if len(users) == 0:
-                
-
-                session.add_all(
-                    [
-                        User(
-                            auth0_id="auth0|1",
-                            username="athlete1",
-                            email="athlete1@example.com",
-                            full_name="Athlete One",
-                            role=UserRole.ATHLETE
-                        ),
-                        User(
-                            auth0_id="auth0|2",
-                            username="trainer1",
-                            email="trainer1@example.com",
-                            full_name="Trainer One",
-                            role=UserRole.TRAINER
-                        ),
-                        User(
-                            auth0_id="auth0|3",
-                            username="coach1",
-                            email="coach1@example.com",
-                            full_name="Coach One",
-                            role=UserRole.COACH
-                        ),
-                        User(
-                            auth0_id="auth0|4",
-                            username="dietician1",
-                            email="dietician1@example.com",
-                            full_name="Dietician One",
-                            role=UserRole.DIETICIAN
-                        ),
-                        User(
-                            auth0_id="auth0|5",
-                            username="athlete2",
-                            email="athlete2@example.com",
-                            full_name="Athlete Two",
-                            role=UserRole.ATHLETE
-                        ),
-                    ]
-                )
+            # delete all users from table
+            # await session.execute(User.__table__.delete())
+            
             await session.commit()  # Commit the transaction
 
 
@@ -75,3 +45,5 @@ async def init_db():
 
     # Create sample data
     await create_sample_data()
+
+

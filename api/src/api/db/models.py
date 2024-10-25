@@ -1,10 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime
-from sqlalchemy.orm import relationship
 import enum
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-from sqlalchemy.orm import declarative_base
 
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -76,11 +75,13 @@ class TrainingPlanType(str, enum.Enum):
     BALANCE = "balance"
     MIXED = "mixed"
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime, Table
-from sqlalchemy.orm import relationship
 import enum
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+from sqlalchemy import (Column, DateTime, Enum, ForeignKey, Integer, String,
+                        Table)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
@@ -98,11 +99,22 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     full_name = Column(String, index=True)
-    role = Column(Enum(UserRole), nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.ATHLETE)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     training_plans = relationship("TrainingPlan", back_populates="creator")
     dietary_plans = relationship("DietaryPlan", back_populates="creator")
+
+    # create asdict method to return the user as a dictionary
+    def asdict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role.value,
+            "created_at": self.created_at
+        }
     
 
 subscriptions = Table(

@@ -1,11 +1,26 @@
 import React from 'react';
-import { getSession, withPageAuthRequired } from '@auth0/nextjs-auth0';
+import { getSession, getAccessToken, withPageAuthRequired } from '@auth0/nextjs-auth0';
 
 import Highlight from '../../components/Highlight';
 
 export default withPageAuthRequired(
   async function SSRPage() {
     const { user } = await getSession();
+    //  get accessToken for the user for the API
+    // get JWT accessToken for API
+    const { accessToken } = await getAccessToken();
+
+    // get id token
+
+    // const data = await fetch('http://localhost:8000/users/all', {
+    //   headers: {
+    //     Authorization: `Bearer ${accessToken}`,
+    //   },
+    // }).then((res) => res.json());
+
+    // fetch /api/shows
+    const response = await fetch('http://localhost:3000/api/shows');
+    
     return (
       <>
         <div className="mb-5" data-testid="ssr">

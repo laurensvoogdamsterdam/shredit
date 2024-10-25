@@ -15,11 +15,13 @@ function External() {
     setState(previous => ({ ...previous, isLoading: true }));
 
     try {
+
       const response = await fetch('/api/shows');
       const data = await response.json();
 
       setState(previous => ({ ...previous, response: data, error: undefined }));
     } catch (error) {
+      console.log(error);
       setState(previous => ({ ...previous, response: undefined, error }));
     } finally {
       setState(previous => ({ ...previous, isLoading: false }));
