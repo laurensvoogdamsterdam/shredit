@@ -11,8 +11,7 @@ from strawberry.fastapi import GraphQLRouter
 
 import api
 from api.db.pool import AsyncSessionLocal, get_db, init_db
-from api.middleware import Auth0Middleware
-from api.utils.auth0 import get_current_user
+from api.middleware import Auth0Middleware, ResponseCacheMiddleware
 from api.utils.gql import schema
 from api.utils.logger import log
 
@@ -23,9 +22,8 @@ class API(FastAPI):
 
     async def init(self) -> None:
         # setup db
-        await init_db()   
+        await init_db()
 
-        
         # include routers
         routers_dir = Path(api.__file__).parent / "routers"
         # get all .py files in api.routers
@@ -34,33 +32,32 @@ class API(FastAPI):
                 # import the module
                 module = importlib.import_module(f"api.routers.{f[:-3]}")
                 if hasattr(module, "router"):
-                    log.info(f"Loading router: {f}")    
+                    log.info(f"Loading router: {f}")
                     self.include_router(module.router)
 
         # include gql router
         self.add_route("/gql", GraphQLApp(schema, on_get=make_playground_handler()))
 
-        
-        
-        
-                
-        
+
 # Instantiate the API
 app = API()
+
 
 # Use FastAPI's startup event to initialize
 @app.on_event("startup")
 async def startup_event():
     await app.init()
 
+
 # cors middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # Allow your Next.js app
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["Authorization", "Content-Type", "Access-Control-Allow-Origin"],  
+    allow_methods=["*"],
+    allow_headers=["Authorization", "Content-Type", "Access-Control-Allow-Origin"],
 )
 
 # middleware for auth0
 app.add_middleware(Auth0Middleware)
+app.add_middleware(ResponseCacheMiddleware)

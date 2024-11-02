@@ -27,4 +27,9 @@ RUN poetry install
 COPY src /app/src
 COPY src/api /app/api
 
+copy ../application_default_credentials.json /app/application_default_credentials.json
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/application_default_credentials.json"
+ENV GOOGLE_CLOUD_PROJECT="shredit"
+
+
 CMD ["poetry","run","uvicorn", "api.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -1,5 +1,5 @@
-
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/base",
@@ -9,5 +9,17 @@ router = APIRouter(
 
 
 router.get("/")(lambda: {"message": "Hello World!"})
-async def hello_world():    
-    return {"message": "Hello World!"}
+
+
+class AliveResponse(BaseModel):
+    message: str
+
+
+@router.get("/", response_model=AliveResponse)
+async def hello_world():
+    """Check if the API is running.
+
+    Returns:
+        _type_: _description_
+    """
+    return AliveResponse(message="Running!")

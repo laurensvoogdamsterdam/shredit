@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { withPageAuthRequired, useUser } from '@auth0/nextjs-auth0/client';
+import Highlight from '../../components/Highlight';
 
 
 export default withPageAuthRequired(function CSRPage() {
@@ -12,6 +13,7 @@ export default withPageAuthRequired(function CSRPage() {
   const [shows, setShows] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [query, setQuery] = React.useState('');
 
   // fetch /api/shows
   React.useEffect(() => {
@@ -19,8 +21,7 @@ export default withPageAuthRequired(function CSRPage() {
     const fetchShows = async () => {
       try {
 
-        const response = await fetch('http://localhost:3000/api/shows'); 
-        console.log(response)
+        const response = await fetch(`http://localhost:3000/api/shows?q=${query}`); 
        
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
@@ -36,7 +37,7 @@ export default withPageAuthRequired(function CSRPage() {
     };
 
     fetchShows(); // Call the async function
-  }, []); 
+  }, [query]); 
 
 
   return (
@@ -57,9 +58,18 @@ export default withPageAuthRequired(function CSRPage() {
           <p>
             You can also fetch the user profile by calling the <code>/api/auth/me</code> API route.
           </p>
+          <p>
+            The following data is fetched from the <code>/api/shows</code> API route.
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search for shows"
+            />
+          </p>
           {/* put shows in coe snippet */}
           <pre>
-            <code>{JSON.stringify(shows, null, 2)}</code> 
+            <Highlight>{JSON.stringify(shows, null, 2)}</Highlight> 
           </pre>
 
         </div>

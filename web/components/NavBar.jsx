@@ -41,12 +41,12 @@ const NavBar = () => {
                 <>
                   <NavItem>
                     <PageLink href="/csr" className="nav-link" testId="navbar-csr">
-                      Client-side rendered page
+                      CSR
                     </PageLink>
                   </NavItem>
                   <NavItem>
                     <PageLink href="/ssr" className="nav-link" testId="navbar-ssr">
-                      Server-side rendered page
+                      SSR
                     </PageLink>
                   </NavItem>
                   <NavItem>
@@ -54,6 +54,30 @@ const NavBar = () => {
                       External API
                     </PageLink>
                   </NavItem>
+                  <NavItem>
+                    <PageLink href="/chat" className="nav-link" testId="navbar-external">
+                      Chats
+                    </PageLink>
+                  </NavItem>
+
+                  <NavItem>
+                    <PageLink href="/storage" className="nav-link" testId="navbar-external">
+                      Storage
+                    </PageLink>
+                  </NavItem>
+
+                  <NavItem>
+                    <PageLink href="/llm" className="nav-link" testId="navbar-external">
+                      LLM
+                    </PageLink>
+                  </NavItem>
+
+                  <NavItem>
+                    <PageLink href="/workflows" className="nav-link" testId="navbar-external">
+                    workflows
+                    </PageLink>
+                  </NavItem>
+
                 </>
               )}
             </Nav>

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
         # Specify that the environment variables will be loaded from a `.env` file
         env_file = ".env"
 
+
 @lru_cache()
 def get_settings():
     return Settings()

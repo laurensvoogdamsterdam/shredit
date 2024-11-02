@@ -24,10 +24,11 @@ class Query(graphene.ObjectType):
             result = await session.execute(select(User))
             return result.scalars().all()
 
-    async def resolve_user_by_id(self, info, id):        
+    async def resolve_user_by_id(self, info, id):
         async with AsyncSessionLocal() as session:
             result = await session.execute(select(User).filter(User.id == id))
             return result.scalar_one_or_none()
+
 
 # Define the schema with the UserType and Query
 schema = graphene.Schema(query=Query)

@@ -18,7 +18,7 @@ class DbSessionMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
 
             # Commit the transaction if everything went well
-            await request.state.db.commit()            
+            await request.state.db.commit()
 
         except HTTPException as e:
             # Rollback in case of an error
@@ -28,7 +28,9 @@ class DbSessionMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             # Rollback in case of any other exception
             await request.state.db.rollback()
-            return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+            return JSONResponse(
+                status_code=500, content={"detail": "Internal Server Error"}
+            )
 
         finally:
             # Close the session after the request has been processed

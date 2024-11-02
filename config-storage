@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Define the endpoint URL and bucket name
+ENDPOINT_URL="http://localhost:4566"
+BUCKET_NAME="users"
+
+# Create the bucket
+aws --endpoint-url=$ENDPOINT_URL s3 mb s3://$BUCKET_NAME
+
+# Set the CORS configuration
+aws --endpoint-url=$ENDPOINT_URL s3api put-bucket-cors --bucket $BUCKET_NAME --cors-configuration '{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["*"],
+      "AllowedMethods": ["PUT", "POST", "GET", "HEAD"],
+      "AllowedHeaders": ["*"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}'
