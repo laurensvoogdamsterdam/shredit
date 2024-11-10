@@ -89,7 +89,7 @@ async def add_message(
     messages = conversation.get_history()   
     print(messages)
     #  get response from llm (placeholder)
-    response = await agent.run({"history": messages, "question": question.content})
+    response = await agent.run(history= messages,question = question.content)
     # add message to conversation
     messages.append(response)
     conversation.set_history(messages)  

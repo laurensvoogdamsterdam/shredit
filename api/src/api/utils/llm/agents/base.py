@@ -1,13 +1,13 @@
 #  create abstract base class for AgentFlow
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, List
 from api.utils.llm.config import Message   
 
 
 class AgentFlow(ABC):
     @abstractmethod
-    async def run(self, data: Dict[str, Any]) -> Message:
+    async def run(self, question: str, history: List[Message]) -> Message:
         """Runs the agent
 
         Args:
