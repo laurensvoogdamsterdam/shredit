@@ -3,6 +3,8 @@ from typing import Any
 import docker
 from docker.models.containers import Container
 
+from api.utils.logger import log
+
 from .base import BaseContainerPlatform
 
 
@@ -10,7 +12,11 @@ class DockerPlatform(BaseContainerPlatform):
     """Docker platform to manage containers."""
 
     def __init__(self):
-        self.client = docker.from_env()
+        try:
+            self.client = docker.from_env()
+        except Exception as e:
+            log.error(f"Failed to connect to Docker: {e}")
+            raise e
 
     async def start_container(self, image: str, environment: dict[str, Any]) -> str:
         """Start a container with the specified image and environment variables.
@@ -22,9 +28,13 @@ class DockerPlatform(BaseContainerPlatform):
         Returns:
             str: _description_
         """
-        container = self.client.containers.run(
-            image, detach=True, environment=environment
-        )
+        log.info(f"Starting container with image: {image}")
+        try:
+            container = self.client.containers.run(
+                image, detach=True, environment=environment
+            )
+        except Exception as e:
+            raise e
         return container.id
 
     async def get_container_status(self, container_id: str) -> str:

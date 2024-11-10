@@ -1,18 +1,16 @@
 import os
 
-from cachetools import LRUCache, cached, TTLCache
+from cachetools import LRUCache, TTLCache, cached
 from cachetools.keys import hashkey
 from fastapi import BackgroundTasks, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from api.db.models import User
 from api.db.pool import AsyncSessionLocal
 from api.utils.idp import IdentifyProviderFactory
-from api.utils.logger import log
-from sqlalchemy.orm import selectinload
-
 from api.utils.logger import log
 
 log = log.getChild(__name__)
@@ -96,8 +94,12 @@ class Auth0Middleware(BaseHTTPMiddleware):
                     full_name=user_info["name"],
                     username=user_info["nickname"] if "nickname" in user_info else None,
                     avatar_url=user_info["picture"] if "picture" in user_info else None,
-                    given_name=user_info["given_name"] if "given_name" in user_info else None,
-                    family_name=user_info["family_name"]    if "family_name" in user_info else None,                    
+                    given_name=(
+                        user_info["given_name"] if "given_name" in user_info else None
+                    ),
+                    family_name=(
+                        user_info["family_name"] if "family_name" in user_info else None
+                    ),
                 )
                 session.add(user)
                 await session.commit()

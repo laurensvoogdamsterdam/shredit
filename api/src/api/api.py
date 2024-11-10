@@ -11,7 +11,11 @@ from strawberry.fastapi import GraphQLRouter
 
 import api
 from api.db.pool import AsyncSessionLocal, get_db, init_db
-from api.middleware import Auth0Middleware, ResponseCacheMiddleware
+from api.middleware import (
+    Auth0Middleware,
+    HTTPExceptionMiddleware,
+    ResponseCacheMiddleware,
+)
 from api.utils.gql import schema
 from api.utils.logger import log
 
@@ -61,3 +65,4 @@ app.add_middleware(
 # middleware for auth0
 app.add_middleware(Auth0Middleware)
 app.add_middleware(ResponseCacheMiddleware)
+app.add_middleware(HTTPExceptionMiddleware)

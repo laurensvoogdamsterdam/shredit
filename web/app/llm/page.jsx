@@ -10,34 +10,59 @@ export default withPageAuthRequired(function CSRPage() {
   //  get accessToken for the user for the API
   
 
-  const [shows, setShows] = React.useState([]);
+  const [conversation, setConversation] = React.useState(-1);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [query, setQuery] = React.useState('');
+  const [history, setHistory] = React.useState([]);
+  const [answer, setAnswer] = React.useState('');
 
-  // fetch /api/shows
-  React.useEffect(() => {
-    // Fetch the data inside useEffect
-    const fetchShows = async () => {
-      try {
-
-        const response = await fetch(`http://localhost:3000/api/shows?q=${query}`); 
-       
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-        const data = await response.json();
-        setShows(data); // Update state with the fetched data
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  
+  // create conversation
+  async function createConversation() {
+    try {
+      const res = await fetch(`/api/llm`,{
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },        
+      })
+      if (!res.ok) {
+        throw new Error(res.statusText);
       }
-    };
+      const data = await res.json();
+      setConversation(data.id);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-    fetchShows(); // Call the async function
-  }, [query]); 
+  async function handleChat() {
+    try {
+      const res = await fetch(`/api/llm/${conversation}`,{
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },        
+        body: JSON.stringify({content:query, role:'user'})
+      })
+      if (!res.ok) {
+        throw new Error(res.statusText);
+      }
+      const data = await res.json();
+      setHistory(prevState => [...prevState, {role: 'user', content: query}]);
+      setHistory(prevState => [...prevState, {role: 'agent', content: data.content}]);
+
+    } catch (error) {
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
 
   return (
@@ -57,6 +82,14 @@ export default withPageAuthRequired(function CSRPage() {
             The following data is fetched from the <code>/api/shows</code> API route.
             {`
             `}
+            
+             {conversation < 0 ? (
+              <button onClick={async ()=> await  createConversation()}>Create Conversation</button>
+             ) : (
+              <Highlight>LLM Chat {conversation}</Highlight>
+              )}
+
+
             <input
               type="text"
               value={query}
@@ -64,7 +97,15 @@ export default withPageAuthRequired(function CSRPage() {
               placeholder="Search for shows"
             />
           </p>
+          {/* map over history */}
+          {history && history.map((item, index) => (
+            <div key={index}>
+              <p>{item.role}: {item.content}</p>
+            </div>
+          ))}
+
           {/* put shows in coe snippet */}
+          <button onClick={async ()=> await  handleChat()}>Ask LLM</button>
           
 
         </div>

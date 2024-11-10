@@ -40,4 +40,4 @@ def get_blob_storage() -> BaseStorage:
     Yields:
         Iterator[BaseStorage]: _description_
     """
-    yield BlobFactory.build()
+    return BlobFactory.build()

@@ -2,11 +2,10 @@ import os
 import time
 from typing import List
 
-import boto3
 import aioboto3
+import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-
 
 from api.blob.base import BaseStorage
 

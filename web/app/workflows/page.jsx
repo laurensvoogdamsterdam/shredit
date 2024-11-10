@@ -12,6 +12,41 @@ export default withPageAuthRequired(function WorkflowPage() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [workflows, setWorkflows] = useState([]);
+  const [instances, setInstances] = useState([]); 
+
+  // start instance with workflow id
+  const startInstance = async (workflowId) => {
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:3000/api/workflows', {
+        method: 'POST',        
+        body: JSON.stringify({ id:workflowId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to start instance: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setInstances([...instances, data]); // Add the new instance to the list
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    }
+  };
+
+  async function getWorkflowInstances() { 
+    try {
+      const response = await fetch('http://localhost:3000/api/workflows/instance');
+      const data = await response.json();
+      setInstances(data);
+    } catch (err) {
+      console.error('Error fetching instances:', err);
+    }
+  }
+
+
+  
 
   // Start workflow and retrieve a workflow ID
   const startWorkflow = async () => {
@@ -52,6 +87,7 @@ export default withPageAuthRequired(function WorkflowPage() {
     };
 
     fetchWorkflows();
+    getWorkflowInstances();
   }
   , []);
 
@@ -100,8 +136,9 @@ export default withPageAuthRequired(function WorkflowPage() {
       <ul>
         {workflows.map((workflow) => (
           <li key={workflow.id}>
-            <p>{workflow.name}</p>
-            <p>{workflow.description}</p>
+            <p>{workflow.name} {workflow.id}</p>
+            <button onClick={() => startInstance(workflow.id)}>Start</button>
+            
           </li>
         ))}
       </ul>
@@ -114,6 +151,18 @@ export default withPageAuthRequired(function WorkflowPage() {
           <p>Status: {status}</p>
         </>
       )}
+
+      {/* loop over instances */}
+      <ul>
+        {instances.map((instance) => (
+          <li key={instance.id}>
+            <p>{instance.id}</p>
+            <p>{instance.workflow_id}</p>
+            <p>{instance.container_id}</p>
+            <p>{instance.status}</p>
+          </li>
+        ))}
+      </ul>
 
       {status === 'Completed' && (
         <div>

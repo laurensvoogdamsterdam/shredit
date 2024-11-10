@@ -17,12 +17,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 
-from api.db.models import WorkflowStatus, Workflow, WorkflowInstance
 from api.db.models import File as FileModel
-from api.db.models import Message, MessageType, User, chat_members
+from api.db.models import (
+    Message,
+    MessageType,
+    User,
+    Workflow,
+    WorkflowInstance,
+    WorkflowStatus,
+    chat_members,
+)
 from api.db.pool import get_db
-from api.utils.compute import get_container_platform, BaseContainerPlatform
-
+from api.utils.compute import BaseContainerPlatform, get_container_platform
+from api.utils.logger import log
 
 router = APIRouter(prefix="/workflows", tags=["chat"])
 
@@ -39,12 +46,6 @@ class WorkflowStatusResponse(BaseModel):
     results: Optional[dict] = None
 
 
-class WorkflowResponse(BaseModel):
-    id: int
-    status: str
-    container_id: str
-
-
 class WorkflowInstanceLogs(BaseModel):
     message: str
 
@@ -56,15 +57,27 @@ class WorkflowStoppingResponse(BaseModel):
 class WorkflowResponse(BaseModel):
     id: int
     name: str
-    description: str
-
-    class Config:
-        orm_mode = True
 
 
-@router.post("/start", response_model=WorkflowResponse)
-async def start_workflow(
-    workflow_id: int,
+class WorkflowInstanceResponse(BaseModel):
+    id: int
+    workflow_id: int
+    container_id: Optional[str]
+    status: Optional[str]
+
+
+class StartWorkflowRequest(BaseModel):
+    id: Optional[str] = None
+
+
+# start workflow data
+class StartWorkflowRequest(BaseModel):
+    id: Optional[int] = 0
+
+
+@router.post("/start")
+async def start_workflow_instance(
+    workflow_to_start: StartWorkflowRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
     container_platform: BaseContainerPlatform = Depends(get_container_platform),
@@ -84,13 +97,16 @@ async def start_workflow(
     Returns:
         _type_: _description_
     """
+
     # Get the user ID from the request state
-    user = request.state.user_info["auth_id"]
+    user = request.state.user_info
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Retrieve the workflow details from DB
-    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id))
+    result = await db.execute(
+        select(Workflow).where(Workflow.id == workflow_to_start.id)
+    )
     workflow = result.scalars().first()
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
@@ -108,23 +124,25 @@ async def start_workflow(
 
     # Log the workflow instance in DB
     instance = WorkflowInstance(
-        workflow_id=workflow_id,
+        workflow_id=workflow_to_start.id,
         user_id=user.id,
-        status=WorkflowStatus.RUNNING,
+        status="running",
         started_at=datetime.utcnow(),
         container_id=container_id,
     )
     db.add(instance)
-    db.commit()
+    await db.commit()
 
-    return WorkflowResponse(
-        id=instance.id, status=instance.status, container_id=container_id
+    return WorkflowInstanceResponse(
+        id=instance.id,
+        workflow_id=workflow.id,
+        status=instance.status,
+        container_id=container_id,
     )
 
 
 @router.get("/status/{instance_id}", response_model=WorkflowStatusResponse)
 async def get_workflow_status(
-    instance_id: int,
     request: Request,
     db: AsyncSession = Depends(get_db),
     container_platform: BaseContainerPlatform = Depends(get_container_platform),
@@ -144,7 +162,7 @@ async def get_workflow_status(
         _type_: _description_
     """
     # get user
-    user = request.state.user_info["auth_id"]
+    user = request.state.user_info
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -169,7 +187,7 @@ async def get_workflow_status(
         instance.status = status
         if status == WorkflowStatus.COMPLETED:
             instance.completed_at = datetime.utcnow()
-        db.commit()
+        await db.commit()
 
     return WorkflowStatusResponse(id=instance.id, status=instance.status)
 
@@ -196,7 +214,7 @@ async def stop_workflow(
     Returns:
         _type_: _description_
     """
-    user = request.state.user_info["auth_id"]
+    user = request.state.user_info
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -249,7 +267,7 @@ async def get_workflow_logs(
     Returns:
         _type_: _description_
     """
-    user = request.state.user_info["auth_id"]
+    user = request.state.user_info
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -266,6 +284,35 @@ async def get_workflow_logs(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve logs: {e}")
 
     return WorkflowInstanceLogs(message=logs)
+
+
+# get instances for user
+@router.get("/instances", response_model=List[WorkflowInstanceResponse])
+async def get_user_instances(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a list of all workflows instances for the current user.
+
+    Args:
+        request (Request): _description_
+        db (AsyncSession, optional): _description_. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: _description_
+
+    Returns:
+        List[Workflow]: _description_
+    """
+    user = request.state.user_info
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    result = await db.execute(
+        select(WorkflowInstance).where(WorkflowInstance.user_id == user.id)
+    )
+    instances = result.scalars().all()
+    return instances
 
 
 #  get workflows endpoint

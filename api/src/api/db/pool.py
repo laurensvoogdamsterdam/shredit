@@ -2,13 +2,18 @@ import os
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.future import select
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from api.db.models import Base, Workflow
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://postgres:password@db:5432/postgres"
+)
+
+# create vectordb connectionstring
+VECTOR_DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+psycog2://postgres:password@db:5432/vectordb"
 )
 
 # Create an asynchronous engine
@@ -43,14 +48,15 @@ async def create_sample_data():
             # create python Workflow
             # check if workflow exists with name python
             result = await session.execute(
-                select(Workflow).filter(Workflow.name == "Python Workflow")
+                select(Workflow).filter(Workflow.name == "python")
             )
             workflow_exists = result.scalars().first()
             if not workflow_exists:
-                workflow = Workflow(
-                    name="Python Workflow", description="Python Workflow"
-                )
+                workflow = Workflow(name="python", description="A Python workflow")
                 session.add(workflow)
+
+            # # execute CREATE EXTENSION IF NOT EXISTS vector;
+            # await session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
 
             await session.commit()  # Commit the transaction
 

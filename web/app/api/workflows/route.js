@@ -12,8 +12,7 @@ export const GET = withApiAuthRequired(async function chats(req) {
       cache: 'no-store',
       headers: {
         Authorization: `Bearer ${accessToken}`
-      },
-      
+      },      
     });
     const data = await response.json();
 
@@ -25,26 +24,31 @@ export const GET = withApiAuthRequired(async function chats(req) {
 });
 
 
-//  create DELETE
-export const POST = withApiAuthRequired(async function deleteChat(req) {
+
+export const POST = withApiAuthRequired(async function startWorkflow(req) {
   try {
-    const res = new NextResponse();    
-    const {id} = await req.json();    
-    const {accessToken} = await getAccessToken(req, res);
+    const res = new NextResponse();
+    const { id } = await req.json();  // Assuming `id` is being passed in the request body
+    const { accessToken } = await getAccessToken(req, res);
     
+
     const response = await fetch(`http://localhost:8000/workflows/start`, {
       method: 'POST',
-      cache: 'no-store',
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
-      
+      body: JSON.stringify({ id }),
     });
-    const data = await response.json();
 
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
     return NextResponse.json(data, res);
   } catch (error) {
-    console.log(error);
+    console.error('Error starting workflow:', error);
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 });

@@ -328,7 +328,8 @@ async def get_chat_messages(
     room = result.scalars().first()
     #  ensure that user is either a member or admins or creator of the room
     if (
-        user.id not in [member.id for member in room.members]
+        user.id
+        not in [member.id for member in room.members]
         # as now all users in a chat should belong to members, the below is nolonger needed
         # and user.id not in [admin.id for admin in room.admins]
         # and user.id != room.creator.id
