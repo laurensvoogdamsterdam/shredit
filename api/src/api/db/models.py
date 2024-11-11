@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from typing import Generic, Iterator, Optional, Sequence, TypeVar
+from typing import Generic, Iterator, Optional, Sequence, TypeVar, Union, List
 
 from pydantic import BaseModel, Field
 from sqlalchemy import (
@@ -241,8 +241,8 @@ class Conversation(Base):
         return [LLMMessage.from_dict(msg) for msg in self.history]
 
     # set history from list of objects
-    def set_history(self, history: Sequence[LLMMessage]):
-        self.history = [msg.to_dict() for msg in history[-self.history_size :]]
+    def set_history(self, history: List[LLMMessage]):
+        self.history = [msg.to_dict() for msg in history]
 
 
 #  User chat models

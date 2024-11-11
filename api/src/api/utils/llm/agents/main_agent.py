@@ -2,7 +2,7 @@ from .base import AgentFlow
 from typing import List
 from api.utils.llm.config import Message
 from langchain_openai import ChatOpenAI
-
+from api.utils.llm.router.classification import ClassificationRouter
 
 
 class MainAgent(AgentFlow):
@@ -12,7 +12,7 @@ class MainAgent(AgentFlow):
         AgentFlow (_type_): _description_
     """
     def __init__(self):
-        pass
+        self.classifier = ClassificationRouter()
 
     async def run(self, question: str, history: List[Message]) -> Message:
         """ Run agent flow
@@ -25,6 +25,10 @@ class MainAgent(AgentFlow):
         """
         model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
         # get answer from model.invoke(question)
+
+        
+        route = self.classifier.route(question, history)
+        print(route.classification)
         response = model.invoke(question)
         # get content from  response
         answer = response.content
